@@ -1,0 +1,14 @@
+### Health check
+GET http://localhost:8081/health
+
+### Create item
+POST http://localhost:8081/api/v1/items
+Content-Type: application/json
+
+{
+  "name": "test item",
+  "value": "test value"
+}
+
+### Get item through another replica (replace UUID)
+GET http://localhost:8082/api/v1/items/53dc68a4-458b-4d2f-b1c3-83ace8f4088d

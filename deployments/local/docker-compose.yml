@@ -1,0 +1,58 @@
+x-backend-common: &backend-common
+  image: adaptive-routing-backend:local
+  pull_policy: never
+  command: ["-config", "/app/env.yaml"]
+  depends_on:
+    postgres:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend-1:
+    <<: *backend-common
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    volumes:
+      - ../envs/backend-1.yaml:/app/env.yaml:ro
+    ports:
+      - "8081:8080"
+
+  backend-2:
+    <<: *backend-common
+    volumes:
+      - ../envs/backend-2.yaml:/app/env.yaml:ro
+    ports:
+      - "8082:8080"
+
+  backend-3:
+    <<: *backend-common
+    volumes:
+      - ../envs/backend-3.yaml:/app/env.yaml:ro
+    ports:
+      - "8083:8080"
+
+volumes:
+  postgres-data:
